@@ -1,0 +1,2 @@
+# resistance
+Resistance Game Solver
