@@ -14,31 +14,6 @@ int find_num_spies(set<int> spies, vector<int> team){
 	return overlap;
 }
 
-class GameTree {
-	private:
-		GameSpec* spec;
-		set<int> spies;
-		VotingNode* curr_node;
-	public:
-		GameTree(set<int> spies, GameSpec* spec){
-			this->spies = spies;
-			this->spec = spec;
-
-			curr_node = new VotingNode(NULL, spec, spies, 0, 0, 0);
-			curr_node.make_children();
-		}
-
-		void mission_vote(vector<int> voted_team){
-			curr_node = curr_node.get_child(voted_team);
-			cout << "Uniform probability of resistance win: " << curr_node.uniform_win_prob << endl;
-		}
-
-		void mission_outcome(int outcome){
-			curr_node = curr_node.get_child(outcome);
-			cout << "Uniform probability of resistance win: " << curr_node.uniform_win_prob << endl;
-		}
-};
-
 class VotingNode {
 	private:
 		GameSpec* spec;
@@ -122,6 +97,31 @@ class MissionNode {
 
 		VotingNode* get_child(int outcome){
 			return children[outcome];
+		}
+};
+
+class GameTree {
+	private:
+		GameSpec* spec;
+		set<int> spies;
+		VotingNode* curr_node;
+	public:
+		GameTree(set<int> spies, GameSpec* spec){
+			this->spies = spies;
+			this->spec = spec;
+
+			curr_node = new VotingNode(NULL, spec, spies, 0, 0, 0);
+			curr_node.make_children();
+		}
+
+		void mission_vote(vector<int> voted_team){
+			curr_node = curr_node.get_child(voted_team);
+			cout << "Uniform probability of resistance win: " << curr_node.uniform_win_prob << endl;
+		}
+
+		void mission_outcome(int outcome){
+			curr_node = curr_node.get_child(outcome);
+			cout << "Uniform probability of resistance win: " << curr_node.uniform_win_prob << endl;
 		}
 };
 
