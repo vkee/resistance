@@ -8,19 +8,31 @@ using namespace std;
 
 void print_subset(vector<int> subset){
 	cout << "< ";
-	for (int i : subset){
-		cout << i << " ";
+	for (int i = 0; i < subset.size(); i++){
+		cout << subset[i] << " ";
 	}
-	cout << endl;
+	cout << ">" << endl;
 }
 
-vector<vector<int>> k_subsets(int k, int max){
-	// Implement
+vector< vector<int> > k_subsets(int k, int num){
+	vector< vector<int> > subsets;
+	if (k == 1 && num > 0){
+		for (int i = 0; i < num; i++){
+			vector<int> tuple;
+			tuple.push_back(i);
+			subsets.push_back(tuple);
+		}
+	} else if (num >= k){
+		subsets = k_subsets(k, num - 1);
+		vector< vector<int> > temp_subsets = k_subsets(k - 1, num - 1);
+		for (int i = 0; i < temp_subsets.size(); i++){
+			temp_subsets[i].push_back(num - 1);
+			subsets.push_back(temp_subsets[i]);
+		}
+	}
+	return subsets;
 }
 
-void k_subsets_suffix(vector<vector<int>> subsets, vector<int> suffix, int k, int max){
-	// Implement recursively
-}
 
 class GameSpec {
 	public:
@@ -130,7 +142,12 @@ class MissionNode {
 
 
 int main(){
-	cout << "Main Function" << endl;
+	int k, N;
+	cin >> k >> N;
+	vector< vector<int> > subsets = k_subsets(k, N);
+	for (int i = 0; i < subsets.size(); i++){
+		print_subset(subsets[i]);
+	}
 }
 
 
