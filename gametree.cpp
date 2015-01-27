@@ -34,10 +34,17 @@ class Node {
 			this->spies = spies;
 		};
 
-		double make_children();
-		double make_children(int);
-		Node* get_child(vector<int>);
-		Node* get_child(int);
+		double make_children(){
+			return 0;
+		}
+
+		Node* get_child(int outcome){
+			return new Node(this, spec, spies, spoints, rpoints, mission);
+		}
+
+		Node* get_child(vector<int> voted_team){
+			return new Node(this, spec, spies, spoints, rpoints, mission);
+		}
 };
 
 class VotingNode: public Node {
@@ -87,7 +94,7 @@ double VotingNode::make_children(){
 		uniform_win_prob = 1;
 	} else {
 		uniform_win_prob = 0;
-		Node* child;
+		MissionNode* child;
 		for (int i = 0; i < spec->teams[mission].size(); i++){
 			child = new MissionNode(this, spec, spies, spoints, rpoints, mission);
 			children[spec->teams[mission][i]] = child;
@@ -99,12 +106,12 @@ double VotingNode::make_children(){
 }
 
 double MissionNode::make_children(int num_spies){
-	Node* rchild = new VotingNode(this, spec, spies, spoints, rpoints + 1, mission + 1);
+	VotingNode* rchild = new VotingNode(this, spec, spies, spoints, rpoints + 1, mission + 1);
 	children.push_back(rchild);
 	uniform_win_prob = rchild->make_children();
 
 	if (num_spies >= spec->wins[mission]){
-		Node* schild = new VotingNode(this, spec, spies, spoints + 1, rpoints, mission + 1);
+		VotingNode* schild = new VotingNode(this, spec, spies, spoints + 1, rpoints, mission + 1);
 		children.push_back(schild);
 		uniform_win_prob += schild->make_children();
 		uniform_win_prob /= 2;
@@ -143,6 +150,11 @@ int main(){
 	spies.insert(0);
 	spies.insert(1);
 	GameTree* tree = new GameTree(spies, spec);
+	vector<int> team;
+	team.push_back(0);
+	team.push_back(3);
+	tree->mission_vote(team);
+	tree->mission_outcome(1);
 }
 
 
