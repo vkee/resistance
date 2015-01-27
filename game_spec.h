@@ -2,6 +2,7 @@
 #define GAME_SPEC_H
 
 #include <vector>
+#include <set>
 using namespace std;
 
 void print_subset(vector<int> subset);

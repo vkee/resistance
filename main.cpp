@@ -3,14 +3,14 @@
 #include <vector>
 #include <map>
 #include "game_spec.h"
+#include "game_tree.h"
+
 using namespace std;
 
 int main(){
+	double voting_confidence = 0.1;
+
 	int num_players = 0;
-	// string curr_player_name;
-	// Player* curr_player;
-	// vector<Player*> players;
-	// map<string, Player*> name_player_pairs;
 	cout << "Welcome to the Resistance Game Calculator developed by Matthew Brennan and Vincent Kee." << endl;
 	
 	while (num_players < 5 || num_players > 10){
@@ -19,81 +19,72 @@ int main(){
 		cin >> num_players;
 	}
 
-	GameSpec *game_spec = new GameSpec(10);
+	GameSpec* game_spec = new GameSpec(num_players);
 
+	map<string, int> name_map;
+	string curr_player_name;
 	cout << "Please enter the names (space-separated) of the players:" << endl;
 	for (int i = 0; i < num_players; i++){
 		cin >> curr_player_name;
-		curr_player = new Player(curr_player_name);
-		players.push_back(curr_player);
-		name_player_pairs[curr_player_name] = curr_player;
+		name_map[curr_player_name] = i;
 	}
 
-	// RGame* game = new RGame(players);
-	// game->send_game();
 
-	// int team_size;
-	// vector<Player*> team;
-	// while(!game->done){
-	// 	cout << "Please enter the names (space-separated) of the players on the team:" << endl;
-	// 	team_size = game->team_size;
-	// 	for (int i = 0; i < team_size; i++){
-	// 		cin >> curr_player_name;
-	// 		team.push_back(name_player_pairs[curr_player_name]);
-	// 	}
-	// 	game->update;
-	// 	game->print_statistics;
-	// }
 
 	delete game_spec;
 
 	return 0;
 }
 
-// class RGame {
-// 	private:
-// 		vector<Player> players;
-// 		bool is_over;
-// 	public:
-// 		RGame(vector<Player*> players){
-// 			players = players;
-// 			is_over = false;
-// 			// INITIALIZE GAME PARAMETERS
-// 		}
+vector< set<int> > k_subsets_set(int k, int num){
+	vector< set<int> > subsets;
+	if (k == 1 && num > 0){
+		for (int i = 0; i < num; i++){
+			set<int> tuple;
+			tuple.insert(i);
+			subsets.push_back(tuple);
+		}
+	} else if (num >= k){
+		subsets = k_subsets_set(k, num - 1);
+		vector< set<int> > temp_subsets = k_subsets_set(k - 1, num - 1);
+		for (int i = 0; i < temp_subsets.size(); i++){
+			temp_subsets[i].insert(num - 1);
+			subsets.push_back(temp_subsets[i]);
+		}
+	}
+	return subsets;
+}
 
-// 		void send_game(){
-// 			for (Player player : players){
-// 				player.define_game(&this);
-// 			}
-// 		}
+class RGame {
+	private:
+		GameSpec* spec;
+		map<set<int>, GameTree*> trees;
+		vector<PlayerGame*> players;
+		vector< set<int> > subsets;
+		map<set<int>, double> prob_map;
+	public:
+		RGame(GameSpec* spec){
+			this->spec = spec;
+			subsets = k_subsets_set(spec->num_spies, spec->num_players);
+			for (int i = 0; i < subsets.size(); i++){
+				trees[subsets[i]] = new GameTree(subsets[i], spec);
+				prob_map[subsets[i]] = 1.0 / subsets.size();
+			}
 
-// 		void update(vector<Player*> team){
-// 			// WRITE UPDATE CODE
-// 		}
+			Player* curr_player;
+			for (int i = 0; i < spec->num_players; i++){
+				curr_player = new PlayerGame(spec, trees);
+				players.push_back(curr_player);
+			}
+		}
 
-// 		void print_statistics(){
-// 			// WRITE DISPLAY CODE
-// 		}
+		// update overall game statistics and player statistics
+		void vote_update(vector<int> team, vector<int> votes){
 
-// 		int team_size(){
-// 			// WRITE TEAM SIZE CODE
-// 		}
+		}
 
-// 		bool done(){
-// 			return is_over;
-// 		}
-// };
+		// update overall game statistics and player statistics
+		void mission_update(int outcome){
 
-// class Player{
-// 	private:
-// 		string name;
-// 		RGame* game;
-// 	public:
-// 		Player(string name){
-// 			name = name;
-// 		}
-
-// 		void define_game(RGame* game){
-// 			game = game;
-// 		}
-// };
+		}
+}
