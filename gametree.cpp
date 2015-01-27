@@ -123,25 +123,26 @@ class GameTree {
 	private:
 		GameSpec* spec;
 		set<int> spies;
-		Node* curr_node;
+		VotingNode* vnode;
+		MissionNode* mnode;
 	public:
 		GameTree(set<int> spies, GameSpec* spec){
 			this->spies = spies;
 			this->spec = spec;
 
-			curr_node = new VotingNode(NULL, spec, spies, 0, 0, 0);
-			curr_node->make_children();
+			vnode = new VotingNode(NULL, spec, spies, 0, 0, 0);
 		}
-
+		
 		void mission_vote(vector<int> voted_team){
-			curr_node = curr_node->get_child(voted_team);
-			cout << "Uniform probability of resistance win: " << curr_node->uniform_win_prob << endl;
+			mnode = vnode->get_child(voted_team);
+			cout << "Uniform probability of resistance win: " << mnode->uniform_win_prob << endl;
 		}
 
 		void mission_outcome(int outcome){
-			curr_node = curr_node->get_child(outcome);
-			cout << "Uniform probability of resistance win: " << curr_node->uniform_win_prob << endl;
+			vnode = mnode->get_child(outcome);
+			cout << "Uniform probability of resistance win: " << vnode->uniform_win_prob << endl;
 		}
+		
 };
 
 int main(){
