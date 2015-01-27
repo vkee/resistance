@@ -2,17 +2,24 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "game_spec.h"
+using namespace std;
 
 int main(){
-	int num_players;
-	string curr_player_name;
-	Player* curr_player;
-	vector<Player*> players;
-	map<string, Player*> name_player_pairs;
+	int num_players = 0;
+	// string curr_player_name;
+	// Player* curr_player;
+	// vector<Player*> players;
+	// map<string, Player*> name_player_pairs;
 	cout << "Welcome to the Resistance Game Calculator developed by Matthew Brennan and Vincent Kee." << endl;
-	cout << "Resistance can be played by 5 - 10 people." << endl;
-	cout << "Please enter the number of players playing:" << endl;
-	cin >> num_players;
+	
+	while (num_players < 5 || num_players > 10){
+		cout << "Resistance can be played by 5 - 10 people." << endl;
+		cout << "Please enter the number of players playing: ";
+		cin >> num_players;
+	}
+
+	GameSpec *game_spec = new GameSpec(10);
 
 	cout << "Please enter the names (space-separated) of the players:" << endl;
 	for (int i = 0; i < num_players; i++){
@@ -22,68 +29,71 @@ int main(){
 		name_player_pairs[curr_player_name] = curr_player;
 	}
 
-	RGame* game = new RGame(players);
-	game->send_game();
+	// RGame* game = new RGame(players);
+	// game->send_game();
 
-	int team_size;
-	vector<Player*> team;
-	while(!game->done){
-		cout << "Please enter the names (space-separated) of the players on the team:" << endl;
-		team_size = game->team_size;
-		for (int i = 0; i < team_size; i++){
-			cin >> curr_player_name;
-			team.push_back(name_player_pairs[curr_player_name]);
-		}
-		game->update;
-		game->print_statistics;
-	}
+	// int team_size;
+	// vector<Player*> team;
+	// while(!game->done){
+	// 	cout << "Please enter the names (space-separated) of the players on the team:" << endl;
+	// 	team_size = game->team_size;
+	// 	for (int i = 0; i < team_size; i++){
+	// 		cin >> curr_player_name;
+	// 		team.push_back(name_player_pairs[curr_player_name]);
+	// 	}
+	// 	game->update;
+	// 	game->print_statistics;
+	// }
 
+	delete game_spec;
+
+	return 0;
 }
 
-class RGame {
-	private:
-		vector<Player> players;
-		bool is_over;
-	public:
-		RGame(vector<Player*> players){
-			players = players;
-			is_over = false;
-			// INITIALIZE GAME PARAMETERS
-		}
+// class RGame {
+// 	private:
+// 		vector<Player> players;
+// 		bool is_over;
+// 	public:
+// 		RGame(vector<Player*> players){
+// 			players = players;
+// 			is_over = false;
+// 			// INITIALIZE GAME PARAMETERS
+// 		}
 
-		void send_game(){
-			for (Player player : players){
-				player.define_game(&this);
-			}
-		}
+// 		void send_game(){
+// 			for (Player player : players){
+// 				player.define_game(&this);
+// 			}
+// 		}
 
-		void update(vector<Player*> team){
-			// WRITE UPDATE CODE
-		}
+// 		void update(vector<Player*> team){
+// 			// WRITE UPDATE CODE
+// 		}
 
-		void print_statistics(){
-			// WRITE DISPLAY CODE
-		}
+// 		void print_statistics(){
+// 			// WRITE DISPLAY CODE
+// 		}
 
-		int team_size(){
-			// WRITE TEAM SIZE CODE
-		}
+// 		int team_size(){
+// 			// WRITE TEAM SIZE CODE
+// 		}
 
-		bool done(){
-			return is_over;
-		}
-};
+// 		bool done(){
+// 			return is_over;
+// 		}
+// };
 
-class Player{
-	private:
-		string name;
-		RGame* game;
-	public:
-		Player(string name){
-			name = name;
-		}
+// class Player{
+// 	private:
+// 		string name;
+// 		RGame* game;
+// 	public:
+// 		Player(string name){
+// 			name = name;
+// 		}
 
-		void define_game(RGame* game){
-			game = game;
-		}
-};
+// 		void define_game(RGame* game){
+// 			game = game;
+// 		}
+// };
