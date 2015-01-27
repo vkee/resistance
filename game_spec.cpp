@@ -11,6 +11,7 @@ void print_subset(vector<int> subset){
 	cout << ">" << endl;
 }
 
+// Generates all size k subsets of num numbers
 vector< vector<int> > k_subsets(int k, int num){
 	vector< vector<int> > subsets;
 	if (k == 1 && num > 0){
@@ -96,7 +97,7 @@ GameSpec::GameSpec(int num_players){
 		num_spies = 3;
 	} else if (num_players == 9){
 		missions[0] = 3;
-		missions[1] = 4;
+		missions[1] = 4;spec->teams[mission][i]
 		missions[2] = 4;
 		missions[3] = 5;
 		missions[4] = 5;
@@ -128,6 +129,7 @@ GameSpec::GameSpec(int num_players){
 		cout << "Resistance can only be played by 5 - 10 people." << endl;
 	}
 
+	// Generating the subsets of teams for the 5 rounds of the game
 	for (int i = 0; i < 5; i++){
 		teams.push_back(k_subsets(missions[i], num_players));
 	}

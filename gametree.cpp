@@ -6,6 +6,7 @@
 
 using namespace std;
 
+// Given a set of actual spies and the team that is chosen, returns how many spies are in the team
 int find_num_spies(set<int> spies, vector<int> team){
 	int overlap = 0;
 	for (int i = 0; i < team.size(); i++){
@@ -14,6 +15,7 @@ int find_num_spies(set<int> spies, vector<int> team){
 	return overlap;
 }
 
+// Parent Class for Voting Node and Mission Node
 class Node {
 	protected:
 		GameSpec* spec;
@@ -23,6 +25,9 @@ class Node {
 	public:
 		double uniform_win_prob;
 
+		// spoints - # of pts the spies have
+		// rpoints - # of pts the resistance have
+		// mission - the mission/round number 
 		Node(Node* parent, GameSpec* spec, set<int> spies, int spoints, int rpoints, int mission){
 			this->parent = parent;
 			this->spec = spec;
@@ -34,6 +39,7 @@ class Node {
 			this->spies = spies;
 		};
 
+		// These 3 methods are overloaded - IGNORE
 		double make_children(){
 			return 0;
 		}
@@ -47,6 +53,7 @@ class Node {
 		}
 };
 
+// Node representing a Vote Decision
 class VotingNode: public Node {
 	private:
 		map<vector<int>, Node*> children;
@@ -56,6 +63,7 @@ class VotingNode: public Node {
 
 		double make_children();
 
+		// Get the node that corresponds to the team that was voted to go in the current round
 		Node* get_child(vector<int> voted_team){
 			return children[voted_team];
 		}
@@ -67,6 +75,7 @@ class VotingNode: public Node {
 		}
 };
 
+// Node representing whether or not the mission succeeded
 class MissionNode: public Node {
 	private:
 		vector<Node*> children;
@@ -76,6 +85,7 @@ class MissionNode: public Node {
 
 		double make_children(int);
 
+		// Gets the child given the outcome, where 0 is success and 1 is failed mission
 		Node* get_child(int outcome){
 			return children[outcome];
 		}
@@ -88,19 +98,20 @@ class MissionNode: public Node {
 };
 
 double VotingNode::make_children(){
-	if (spoints == 3){
+	if (spoints == 3){ // if spies have 3 points, there is no chance for the resistance to win
 		uniform_win_prob = 0;
-	} else if (rpoints == 3){
+	} else if (rpoints == 3){ // if the resistance have 3 points, they are guaranteed to win
 		uniform_win_prob = 1;
 	} else {
 		uniform_win_prob = 0;
 		MissionNode* child;
-		for (int i = 0; i < spec->teams[mission].size(); i++){
+		int num_children = spec->teams[mission].size();
+		for (int i = 0; i < num_children; i++){
 			child = new MissionNode(this, spec, spies, spoints, rpoints, mission);
 			children[spec->teams[mission][i]] = child;
 			uniform_win_prob += child->make_children(find_num_spies(spies, spec->teams[mission][i]));
 		}
-		uniform_win_prob /= spec->teams[mission].size();
+		uniform_win_prob /= num_children;
 	}
 	return uniform_win_prob;
 }
@@ -151,10 +162,14 @@ int main(){
 	spies.insert(1);
 	GameTree* tree = new GameTree(spies, spec);
 	vector<int> team;
-	team.push_back(0);
+	team.push_back(2);
 	team.push_back(3);
 	tree->mission_vote(team);
-	tree->mission_outcome(1);
+	tree->mission_outcome(0);
+
+	team.push_back(2);
+	team.push_back(3);
+	team.push_back(4);
+	tree->mission_vote(team);
+	tree->mission_outcome(0);
 }
-
-
