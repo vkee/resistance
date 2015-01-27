@@ -22,33 +22,6 @@ void k_subsets_suffix(vector<vector<int>> subsets, vector<int> suffix, int k, in
 	// Implement recursively
 }
 
-class GameSpec {
-	public:
-		int num_players;
-		int missions[5], wins[5];
-
-		GameSpec(int num_players){
-			num_players = num_players;
-			
-			if (num_players == 5){
-				missions = {2, 3, 2, 3, 3};
-				wins = {1, 1, 1, 1, 1};
-			} else if (num_players == 6){
-				missions = {2, 3, 3, 3, 4};
-				wins = {1, 1, 1, 1, 1};
-			} else if (num_players == 7){
-				missions = {2, 3, 3, 4, 4};
-				wins = {1, 1, 1, 2, 1};
-			} else if (num_players >= 8 && num_players <= 10){
-				missions = {3, 4, 4, 5, 5};
-				wins = {1, 1, 1, 2, 1};
-			} else {
-				cout << "Number of players must be an integer" << endl;
-			}
-
-		}
-};
-
 class VotingNode {
 	private:
 		GameSpec* spec;
