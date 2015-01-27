@@ -97,7 +97,7 @@ GameSpec::GameSpec(int num_players){
 		num_spies = 3;
 	} else if (num_players == 9){
 		missions[0] = 3;
-		missions[1] = 4;spec->teams[mission][i]
+		missions[1] = 4;
 		missions[2] = 4;
 		missions[3] = 5;
 		missions[4] = 5;

@@ -40,16 +40,16 @@ class Node {
 		};
 
 		// These 3 methods are overloaded - IGNORE
-		double make_children(){
-			return 0;
+		virtual double make_children(){
+			return -100;
+		};
+
+		virtual Node* get_child(int outcome){
+			return NULL;
 		}
 
-		Node* get_child(int outcome){
-			return new Node(this, spec, spies, spoints, rpoints, mission);
-		}
-
-		Node* get_child(vector<int> voted_team){
-			return new Node(this, spec, spies, spoints, rpoints, mission);
+		virtual Node* get_child(vector<int> voted_team){
+			return NULL;
 		}
 };
 
@@ -134,24 +134,25 @@ class GameTree {
 	private:
 		GameSpec* spec;
 		set<int> spies;
-		VotingNode* vnode;
-		MissionNode* mnode;
+		Node* curr_node;
 	public:
 		GameTree(set<int> spies, GameSpec* spec){
 			this->spies = spies;
 			this->spec = spec;
 
-			vnode = new VotingNode(NULL, spec, spies, 0, 0, 0);
+			curr_node = new VotingNode(NULL, spec, spies, 0, 0, 0);
+			double result = curr_node->make_children();
+			cout << result << endl;
 		}
 		
 		void mission_vote(vector<int> voted_team){
-			mnode = vnode->get_child(voted_team);
-			cout << "Uniform probability of resistance win: " << mnode->uniform_win_prob << endl;
+			curr_node = curr_node->get_child(voted_team);
+			cout << "Uniform probability of resistance win: " << curr_node->uniform_win_prob << endl;
 		}
 
 		void mission_outcome(int outcome){
-			vnode = mnode->get_child(outcome);
-			cout << "Uniform probability of resistance win: " << vnode->uniform_win_prob << endl;
+			curr_node = curr_node->get_child(outcome);
+			cout << "Uniform probability of resistance win: " << curr_node->uniform_win_prob << endl;
 		}
 		
 };
@@ -163,14 +164,28 @@ int main(){
 	spies.insert(1);
 	GameTree* tree = new GameTree(spies, spec);
 	vector<int> team;
+	team.push_back(0);
 	team.push_back(2);
-	team.push_back(3);
 	tree->mission_vote(team);
 	tree->mission_outcome(0);
 
-	team.push_back(2);
+	team.clear();
+	team.push_back(0);
+	team.push_back(1);
+	team.push_back(4);
+	tree->mission_vote(team);
+	tree->mission_outcome(1);
+
+	team.clear();
+	team.push_back(1);
+	team.push_back(3);
+	tree->mission_vote(team);
+	tree->mission_outcome(1);
+
+	team.clear();
+	team.push_back(1);
 	team.push_back(3);
 	team.push_back(4);
 	tree->mission_vote(team);
-	tree->mission_outcome(0);
+	tree->mission_outcome(1);
 }
