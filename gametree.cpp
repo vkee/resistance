@@ -142,22 +142,31 @@ class GameSpec {
 		}
 };
 
+int find_num_spies(set<int> spies, vector<int> team){
+	int overlap = 0;
+	for (int i = 0; i < team.size(); i++){
+		overlap += spies.count(team[i]);
+	}
+	return overlap;
+}
+
 class VotingNode {
 	private:
 		GameSpec* spec;
 		int spoints, rpoints, mission;
 		MissionNode* parent;
 		map<vector<int>, MissionNode*> children;
+		set<int> spies;
 	public:
-		double uniform_win_prob;
-
 		VotingNode(MissionNode* parent, GameSpec* spec, set<int> spies, int spoints, int rpoints, int mission){
-			parent = parent;
-			spec = spec;
+			this->parent = parent;
+			this->spec = spec;
 
-			spoints = spoints;
-			rpoints = rpoints;
-			mission = mission;
+			this->spoints = spoints;
+			this->rpoints = rpoints;
+			this->mission = mission;
+
+			this->spies = spies;
 		}
 
 		double makeChildren(){
@@ -168,9 +177,16 @@ class VotingNode {
 				children == NULL;
 				uniform_win_prob = 1;
 			} else {
-				int num_children = 0;
 				uniform_win_prob = 0;
+				MissionNode* child;
+				for (int i = 0; i < spec->teams[mission].size(); i++){
+					child = new MissionNode(this, spec, spies, spoints, rpoints, mission);
+					children[spec->teams[mission][i]] = child;
+					uniform_win_prob += child.makeChildren(find_num_spies(spies, spec->teams[mission][i]));
+				}
+				uniform_win_prob /= spec->teams[mission].size();
 			}
+			return uniform_win_prob;
 		}
 };
 
@@ -179,45 +195,32 @@ class MissionNode {
 	private:
 		GameSpec* spec;
 		int spoints, rpoints, mission;
-		VotingxNode* parent;
+		VotingNode* parent;
 		vector<VotingNode*> children;
 	public:
-		double uniform_win_prob;
-
 		MissionNode(VotingNode* parent, GameSpec* spec, set<int> spies, int spoints, int rpoints, int mission){
-			parent = parent;
-			spec = spec;
+			this->parent = parent;
+			this->spec = spec;
 
-			spoints = spoints;
-			rpoints = rpoints;
-			mission = mission;
+			this->spoints = spoints;
+			this->rpoints = rpoints;
+			this->mission = mission;
+
+			this->spies;
 		}
 
 		double makeChildren(int num_spies){
-			if (spoints == 3){
-				children = NULL;
-				uniform_win_prob = 0;
-			} else if (rpoints == 3){
-				children == NULL;
-				uniform_win_prob = 1;
-			} else {
-				int num_children = 0;
-				
-				VotingNode* rchild = new VotingNode(&this, spec, spies, spoints, rpoints + 1, mission + 1);
-				children.push_back(rchild);
-				uniform_win_prob = rchild.makeChildren();
-				num_children++;
+			VotingNode* rchild = new VotingNode(this, spec, spies, spoints, rpoints + 1, mission + 1);
+			children.push_back(rchild);
+			uniform_win_prob = rchild.makeChildren();
 
-				if (num_spies >= spec->wins[mission]){
-					VotingNode* schild = new VotingNode(&this, spec, spies, spoints + 1, rpoints, mission + 1);
-					children.push_back(schild);
-					uniform_win_prob += schild.makeChildren();
-					num_children++;
-				}
-
-				uniform_win_prob /= num_children;
-				return uniform_win_prob;
+			if (num_spies >= spec->wins[mission]){
+				VotingNode* schild = new VotingNode(this, spec, spies, spoints + 1, rpoints, mission + 1);
+				children.push_back(schild);
+				uniform_win_prob += schild.makeChildren();
+				uniform_win_prob /= 2;
 			}
+			return uniform_win_prob;
 		}
 };
 
