@@ -13,7 +13,7 @@ class GameSpec {
 		int num_players, num_resistance, num_spies;
 		int missions[5], wins[5];
 		vector< vector< vector<int> > > teams;
-		GameSpec(int num_players);
+		GameSpec(int);
 };
 
 #endif

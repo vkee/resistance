@@ -14,17 +14,16 @@ int find_num_spies(set<int> spies, vector<int> team){
 	return overlap;
 }
 
-class VotingNode {
-	private:
+class Node {
+	protected:
 		GameSpec* spec;
 		int spoints, rpoints, mission;
-		MissionNode* parent;
-		map<vector<int>, MissionNode*> children;
+		Node* parent;
 		set<int> spies;
 	public:
 		double uniform_win_prob;
 
-		VotingNode(MissionNode* parent, GameSpec* spec, set<int> spies, int spoints, int rpoints, int mission){
+		Node(Node* parent, GameSpec* spec, set<int> spies, int spoints, int rpoints, int mission){
 			this->parent = parent;
 			this->spec = spec;
 
@@ -33,95 +32,108 @@ class VotingNode {
 			this->mission = mission;
 
 			this->spies = spies;
-		}
+		};
 
-		double make_children(){
-			if (spoints == 3){
-				children = NULL;
-				uniform_win_prob = 0;
-			} else if (rpoints == 3){
-				children == NULL;
-				uniform_win_prob = 1;
-			} else {
-				uniform_win_prob = 0;
-				MissionNode* child;
-				for (int i = 0; i < spec->teams[mission].size(); i++){
-					child = new MissionNode(this, spec, spies, spoints, rpoints, mission);
-					children[spec->teams[mission][i]] = child;
-					uniform_win_prob += child.make_children(find_num_spies(spies, spec->teams[mission][i]));
-				}
-				uniform_win_prob /= spec->teams[mission].size();
-			}
-			return uniform_win_prob;
-		}
+		double make_children();
+		double make_children(int);
+		Node* get_child(vector<int>);
+		Node* get_child(int);
+};
 
-		MissionNode* get_child(vector<int> voted_team){
+class VotingNode: public Node {
+	private:
+		map<vector<int>, Node*> children;
+	public:
+		VotingNode(Node* parent, GameSpec* spec, set<int> spies, int spoints, int rpoints, int mission)
+			:Node(parent, spec, spies, spoints, rpoints, mission){}
+
+		double make_children();
+
+		Node* get_child(vector<int> voted_team){
 			return children[voted_team];
 		}
+
+		~VotingNode(){
+			if (!children.empty()){
+				children.clear();
+			}
+		}
 };
 
-
-class MissionNode {
+class MissionNode: public Node {
 	private:
-		GameSpec* spec;
-		int spoints, rpoints, mission;
-		VotingNode* parent;
-		vector<VotingNode*> children;
+		vector<Node*> children;
 	public:
-		double uniform_win_prob;
+		MissionNode(Node* parent, GameSpec* spec, set<int> spies, int spoints, int rpoints, int mission)
+			:Node(parent, spec, spies, spoints, rpoints, mission){}
 
-		MissionNode(VotingNode* parent, GameSpec* spec, set<int> spies, int spoints, int rpoints, int mission){
-			this->parent = parent;
-			this->spec = spec;
+		double make_children(int);
 
-			this->spoints = spoints;
-			this->rpoints = rpoints;
-			this->mission = mission;
-
-			this->spies;
-		}
-
-		double make_children(int num_spies){
-			VotingNode* rchild = new VotingNode(this, spec, spies, spoints, rpoints + 1, mission + 1);
-			children.push_back(rchild);
-			uniform_win_prob = rchild.make_children();
-
-			if (num_spies >= spec->wins[mission]){
-				VotingNode* schild = new VotingNode(this, spec, spies, spoints + 1, rpoints, mission + 1);
-				children.push_back(schild);
-				uniform_win_prob += schild.make_children();
-				uniform_win_prob /= 2;
-			}
-			return uniform_win_prob;
-		}
-
-		VotingNode* get_child(int outcome){
+		Node* get_child(int outcome){
 			return children[outcome];
 		}
+
+		~MissionNode(){
+			for (int i = 0; i < children.size(); i++){
+				delete children[i];
+			}
+		}
 };
+
+double VotingNode::make_children(){
+	if (spoints == 3){
+		uniform_win_prob = 0;
+	} else if (rpoints == 3){
+		uniform_win_prob = 1;
+	} else {
+		uniform_win_prob = 0;
+		Node* child;
+		for (int i = 0; i < spec->teams[mission].size(); i++){
+			child = new MissionNode(this, spec, spies, spoints, rpoints, mission);
+			children[spec->teams[mission][i]] = child;
+			uniform_win_prob += child->make_children(find_num_spies(spies, spec->teams[mission][i]));
+		}
+		uniform_win_prob /= spec->teams[mission].size();
+	}
+	return uniform_win_prob;
+}
+
+double MissionNode::make_children(int num_spies){
+	Node* rchild = new VotingNode(this, spec, spies, spoints, rpoints + 1, mission + 1);
+	children.push_back(rchild);
+	uniform_win_prob = rchild->make_children();
+
+	if (num_spies >= spec->wins[mission]){
+		Node* schild = new VotingNode(this, spec, spies, spoints + 1, rpoints, mission + 1);
+		children.push_back(schild);
+		uniform_win_prob += schild->make_children();
+		uniform_win_prob /= 2;
+	}
+	return uniform_win_prob;
+}
 
 class GameTree {
 	private:
 		GameSpec* spec;
 		set<int> spies;
-		VotingNode* curr_node;
+		Node* curr_node;
 	public:
 		GameTree(set<int> spies, GameSpec* spec){
 			this->spies = spies;
 			this->spec = spec;
 
 			curr_node = new VotingNode(NULL, spec, spies, 0, 0, 0);
-			curr_node.make_children();
+			curr_node->make_children();
 		}
 
 		void mission_vote(vector<int> voted_team){
-			curr_node = curr_node.get_child(voted_team);
-			cout << "Uniform probability of resistance win: " << curr_node.uniform_win_prob << endl;
+			curr_node = curr_node->get_child(voted_team);
+			cout << "Uniform probability of resistance win: " << curr_node->uniform_win_prob << endl;
 		}
 
 		void mission_outcome(int outcome){
-			curr_node = curr_node.get_child(outcome);
-			cout << "Uniform probability of resistance win: " << curr_node.uniform_win_prob << endl;
+			curr_node = curr_node->get_child(outcome);
+			cout << "Uniform probability of resistance win: " << curr_node->uniform_win_prob << endl;
 		}
 };
 
