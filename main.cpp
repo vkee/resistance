@@ -9,7 +9,8 @@ int main(){
 	Player* curr_player;
 	vector<Player*> players;
 	map<string, Player*> name_player_pairs;
-
+	cout << "Welcome to the Resistance Game Calculator developed by Matthew Brennan and Vincent Kee." << endl;
+	cout << "Resistance can be played by 5 - 10 people." << endl;
 	cout << "Please enter the number of players playing:" << endl;
 	cin >> num_players;
 
