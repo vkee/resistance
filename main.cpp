@@ -252,14 +252,14 @@ int main(){
 	vector<int> team;
 	set<int> votes;
 	while (game->rpoints < 3 && game->spoints < 3){
-		cout << "Please enter the names (space-separated) of the players on the proposed team: " << endl;
-		for (int i = 0; i < game_spec->missions[mission]; i++){
-			cin >> curr_player_name;
-			team.push_back(name_map[curr_player_name]);
-		}
-		//team.sort();
-
 		while (num_votes < num_players / 2.0){
+			cout << "Please enter the names (space-separated) of the players on the proposed team: " << endl;
+			for (int i = 0; i < game_spec->missions[mission]; i++){
+				cin >> curr_player_name;
+				team.push_back(name_map[curr_player_name]);
+			}
+			//team.sort();
+			
 			cout << "Please enter the number of votes for the proposed team: " << endl;
 			cin >> num_votes;
 
