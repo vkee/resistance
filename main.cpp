@@ -248,7 +248,7 @@ int main(){
 		player_names.push_back(curr_player_name);
 	}
 
-	int mission = 0, num_votes, num_fails;
+	int mission = 0, num_votes = 0, num_fails;
 	vector<int> team;
 	set<int> votes;
 	while (game->rpoints < 3 && game->spoints < 3){
