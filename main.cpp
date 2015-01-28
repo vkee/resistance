@@ -144,9 +144,9 @@ class RGame {
 							prob_no_fail = curr_tree->curr_node->get_child(0)->uniform_win_prob;
 							prob_fail = curr_tree->curr_node->get_child(1)->uniform_win_prob;
 							if (num_fails > 0 && prob_fail + prob_no_fail > 0){
-								prob_factors[spy_set] = prob_fail / (prob_fail + prob_no_fail);
-							} else if (prob_fail + prob_no_fail > 0){
 								prob_factors[spy_set] = prob_no_fail / (prob_fail + prob_no_fail);
+							} else if (prob_fail + prob_no_fail > 0){
+								prob_factors[spy_set] = prob_fail / (prob_fail + prob_no_fail);
 							}
 						}
 
@@ -258,7 +258,7 @@ void print_statistics(RGame* game, vector<string> player_names){
 	cout << "******************************************" << endl;
 }
 
-void print_player_statistics(SimpleRGame* game, vector<string> player_names, string player_name, int player_num){
+void print_player_statistics(RGame* game, vector<string> player_names, string player_name, int player_num){
 	cout << "************STATISTICS FOR " << player_name << "************" << endl;
 	vector<double> stats = game->player_spec_stats(player_num);
 	for (int i = 0; i < player_names.size(); i++){
@@ -286,7 +286,7 @@ int main(){
 	map<string, int> name_map;
 	vector<string> player_names;
 	string curr_player_name;
-	cout << "Please enter the names (space-separated) of the players:" << endl;
+	cout << "Please enter the names (space-separated) of the players: ";
 	for (int i = 0; i < num_players; i++){
 		cin >> curr_player_name;
 		name_map[curr_player_name] = i;
