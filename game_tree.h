@@ -70,7 +70,7 @@ class GameTree {
 		set<int> spies;
 	public:
 		Node* curr_node;
-		
+
 		GameTree(set<int> spies, GameSpec* spec);
 		
 		void mission_vote(vector<int> voted_team);

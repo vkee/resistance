@@ -107,15 +107,15 @@ GameTree::GameTree(set<int> spies, GameSpec* spec){
 
 	curr_node = new VotingNode(NULL, spec, spies, 0, 0, 0);
 	double result = curr_node->make_children();
-	cout << result << endl;
+	//cout << result << endl;
 }
 		
 void GameTree::mission_vote(vector<int> voted_team){
 	curr_node = curr_node->get_child(voted_team);
-	cout << "Uniform probability of resistance win: " << curr_node->uniform_win_prob << endl;
+	//cout << "Uniform probability of resistance win: " << curr_node->uniform_win_prob << endl;
 }
 
 void GameTree::mission_outcome(int outcome){
 	curr_node = curr_node->get_child(outcome);
-	cout << "Uniform probability of resistance win: " << curr_node->uniform_win_prob << endl;
+	//cout << "Uniform probability of resistance win: " << curr_node->uniform_win_prob << endl;
 }

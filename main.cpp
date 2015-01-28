@@ -7,14 +7,6 @@
 
 using namespace std;
 
-void print_statistics(RGame* game, vector<string> player_names){
-	cout << "****************STATISTICS****************" << endl;
-	vector<double> stats = game->player_stats();
-	for (int i = 0; i < player_names.size(); i++){
-		cout << player_names[i] << ": " << stats[i] << endl;
-	}
-}
-
 vector< set<int> > k_subsets_set(int k, int num){
 	vector< set<int> > subsets;
 	if (k == 1 && num > 0){
@@ -46,7 +38,7 @@ class RGame {
 	public:
 		int mission, rpoints, spoints;
 
-		RGame(GameSpec* spec, vconf, mconf){
+		RGame(GameSpec* spec, double vconf, double mconf){
 			this->spec = spec;
 			this->vconf = vconf;
 			this->mconf = mconf;
@@ -55,10 +47,16 @@ class RGame {
 			spoints = 0;
 
 			subsets = k_subsets_set(spec->num_spies, spec->num_players);
+			cout << "> ... Loading game trees" << endl;
+			int part = subsets.size() / 10;
 			for (int i = 0; i < subsets.size(); i++){
 				trees[subsets[i]] = new GameTree(subsets[i], spec);
 				prob_map[subsets[i]] = 1.0 / subsets.size();
+				if (i % part == 0 && i > 0){
+					cout << "> ... Loaded " << (100.0 * i /subsets.size()) << "%" << endl;
+				}
 			}
+			cout << "> ... Loaded 100%" << endl;
 		}
 
 		// update overall game statistics and player statistics
@@ -72,7 +70,7 @@ class RGame {
 			for (int i = 0; i < subsets.size(); i++){
 				spy_set = subsets[i];
 				curr_tree = trees[spy_set];
-				action_prob = curr_tree->curr_node->children[spy_set]->uniform_win_prob;
+				action_prob = curr_tree->curr_node->get_child(team)->uniform_win_prob;
 				factor = 1.0;
 				for (int j = 0; j < spec->num_players; j++){
 					if (votes.count(j) > 0){
@@ -119,7 +117,7 @@ class RGame {
 		void mission_update(int num_fails){
 			set<int> spy_set;
 			GameTree* curr_tree;
-			double prob_no_fail;
+			double prob_no_fail, prob_fail;
 
 			double factor_total = 0.0;
 			map<set<int>, double> prob_factors;
@@ -129,8 +127,8 @@ class RGame {
 				if (find_num_spies(spy_set, most_recent_team) < num_fails){
 					prob_map[spy_set] = 0;
 				} else {
-					prob_no_fail = curr_tree->curr_node->children[0]->uniform_win_prob;
-					prob_fail = curr_tree->curr_node->children[1]->uniform_win_prob;
+					prob_no_fail = curr_tree->curr_node->get_child(0)->uniform_win_prob;
+					prob_fail = curr_tree->curr_node->get_child(1)->uniform_win_prob;
 
 					prob_factors[spy_set] = 0.5;
 					if (num_fails > 0 && prob_fail + prob_no_fail > 0){
@@ -201,6 +199,15 @@ class RGame {
 				trees.clear();
 			}
 		}
+};
+
+void print_statistics(RGame* game, vector<string> player_names){
+	cout << "****************STATISTICS****************" << endl;
+	vector<double> stats = game->player_stats();
+	for (int i = 0; i < player_names.size(); i++){
+		cout << player_names[i] << ": " << stats[i] << endl;
+	}
+	cout << "******************************************" << endl;
 }
 
 //NOTES: not sure how to sort a vector<int> (commented this code out below) and not
