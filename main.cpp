@@ -216,6 +216,32 @@ class RGame {
 			return player_probs;
 		}
 
+		vector<double> player_spec_stats(int player){
+			int num_players = spec->num_players;
+			vector<double> player_probs;
+			for (int j = 0; j < num_players; j++){
+				player_probs.push_back(0);
+			}
+
+			set<int> spy_set;
+			double normalization = 0.0;
+			for (int i = 0; i < subsets.size(); i++){
+				spy_set = subsets[i];
+				for (int j = 0; j < num_players; j++){
+					if (spy_set.count(j) > 0 && spy_set.count(player) == 0){
+						player_probs[j] += prob_map[spy_set];
+						normalization += prob_map[spy_set];
+					}
+				}
+			}
+
+			for (int j = 0; j < num_players; j++){
+				player_probs[j] *= spec->num_spies / normalization;
+			}
+
+			return player_probs;
+		}
+
 		~RGame(){
 			if (!trees.empty()){
 				trees.clear();
@@ -232,8 +258,14 @@ void print_statistics(RGame* game, vector<string> player_names){
 	cout << "******************************************" << endl;
 }
 
-//NOTES: not sure how to sort a vector<int> (commented this code out below) and not
-//sure how to clear sets and vectors (also commented out)
+void print_player_statistics(SimpleRGame* game, vector<string> player_names, string player_name, int player_num){
+	cout << "************STATISTICS FOR " << player_name << "************" << endl;
+	vector<double> stats = game->player_spec_stats(player_num);
+	for (int i = 0; i < player_names.size(); i++){
+		cout << player_names[i] << ": " << stats[i] << endl;
+	}
+}
+
 int main(){
 	double voting_confidence = 0.1;
 	double mission_confidence = 0.8;
@@ -261,7 +293,7 @@ int main(){
 		player_names.push_back(curr_player_name);
 	}
 
-	int mission = 0, num_votes = 0, num_fails;
+	int mission = 0, num_votes = 0, num_fails, num_spec_stats;
 	vector<int> team;
 	set<int> votes;
 	while (game->rpoints < 3 && game->spoints < 3){
@@ -273,10 +305,10 @@ int main(){
 			}
 			sort(team.begin(), team.end());
 			
-			cout << "Please enter the number of votes for the proposed team: " << endl;
+			cout << "Please enter the number of votes for the proposed team: ";
 			cin >> num_votes;
 
-			cout << "Please enter the " << num_votes << " names (space-separated) of the players who voted for the proposed team:" << endl;
+			cout << "Please enter the " << num_votes << " names (space-separated) of the players who voted for the proposed team: ";
 			for (int i = 0; i < num_votes; i++){
 				cin >> curr_player_name;
 				votes.insert(name_map[curr_player_name]);
@@ -295,6 +327,16 @@ int main(){
 
 		game->mission_update(num_fails);
 		print_statistics(game, player_names);
+
+		cout << "Please enter the number of players who would like to know statistics from their perspectives: ";
+		cin >> num_spec_stats;
+		if (num_spec_stats != 0){
+			cout << "Please enter the names of the players who would like to know statistics from their perspectives: ";
+			for (int i = 0; i < num_spec_stats; i++){
+				cin >> curr_player_name;
+				print_player_statistics(game, player_names, curr_player_name, name_map[curr_player_name]);
+			}
+		}
 
 		mission++;
 		num_votes = 0;
