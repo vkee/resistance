@@ -71,45 +71,62 @@ class RGame {
 
 			for (int i = 0; i < subsets.size(); i++){
 				spy_set = subsets[i];
-				curr_tree = trees[spy_set];
-				action_prob = curr_tree->curr_node->get_child(team)->uniform_win_prob;
-				factor = 1.0;
-				for (int j = 0; j < spec->num_players; j++){
-					if (votes.count(j) > 0){
-						if (spy_set.count(j) > 0){
-							factor *= 1 - action_prob;
-						} else {
-							factor *= action_prob;
-						}
+				if (prob_map[spy_set] > 0){
+					curr_tree = trees[spy_set];
+					action_prob = curr_tree->curr_node->get_child(team)->uniform_win_prob;
+					/*Node* test_node = curr_tree->curr_node;
+					Node* child_node = test_node->get_child(team);
+					if (child_node == NULL){
+						cout << "NULL child found" << endl;
 					} else {
-						if (spy_set.count(j) > 0){
-							factor *= action_prob;
+						cout << "Child not NULL" << endl;
+					}
+					test_node->debug();
+					action_prob = child_node->uniform_win_prob;*/
+					factor = 1.0;
+					for (int j = 0; j < spec->num_players; j++){
+						if (votes.count(j) > 0){
+							if (spy_set.count(j) > 0){
+								factor *= 1 - action_prob;
+							} else {
+								factor *= action_prob;
+							}
 						} else {
-							factor *= 1 - action_prob;
+							if (spy_set.count(j) > 0){
+								factor *= action_prob;
+							} else {
+								factor *= 1 - action_prob;
+							}
 						}
 					}
-				}
-				prob_factors[spy_set] = factor;
-				factor_total += factor;			
+					prob_factors[spy_set] = factor;
+					factor_total += factor;		
+				}	
 			}
 
 			double prob_update, normalization = 0.0;
 			for (int i = 0; i < subsets.size(); i++){
 				spy_set = subsets[i];
-				prob_update = vconf * prob_factors[spy_set] + (1 - vconf) * factor_total / subsets.size();
-				prob_map[spy_set] *= prob_update;
-				normalization += prob_map[spy_set];
+				if (prob_map[spy_set] > 0){
+					prob_update = vconf * prob_factors[spy_set] + (1 - vconf) * factor_total / subsets.size();
+					prob_map[spy_set] *= prob_update;
+					normalization += prob_map[spy_set];
+				}
 			}
 
 			for (int i = 0; i < subsets.size(); i++){
 				spy_set = subsets[i];
-				prob_map[spy_set] /= normalization;
+				if (prob_map[spy_set] > 0){
+					prob_map[spy_set] /= normalization;
+				}
 			}
 
 			if (votes.size() >= num_players/2.0){
 				for (int i = 0; i < subsets.size(); i++){
 					spy_set = subsets[i];
-					trees[spy_set]->mission_vote(team);
+					if (prob_map[spy_set] > 0){
+						trees[spy_set]->mission_vote(team);
+					}
 				}
 				most_recent_team = team;
 			}
@@ -126,46 +143,52 @@ class RGame {
 			// Zero impossible probabilities and update based on actions as above
 			for (int i = 0; i < subsets.size(); i++){
 				spy_set = subsets[i];
-				curr_tree = trees[spy_set];
-				if (find_num_spies(spy_set, most_recent_team) < num_fails){
-					prob_map[spy_set] = 0;
-				} else {
-					prob_factors[spy_set] = 1.0;
-					if (find_num_spies(spy_set, most_recent_team) > 0){
-						prob_no_fail = curr_tree->curr_node->get_child(0)->uniform_win_prob;
-						prob_fail = curr_tree->curr_node->get_child(1)->uniform_win_prob;
-						if (num_fails > 0 && prob_fail + prob_no_fail > 0){
-							prob_factors[spy_set] = prob_fail / (prob_fail + prob_no_fail);
-						} else if (prob_fail + prob_no_fail > 0){
-							prob_factors[spy_set] = prob_no_fail / (prob_fail + prob_no_fail);
-						}
-					}
-
-					// may result in errors (double check this part)
-					if (num_fails > 0 && find_num_spies(spy_set, most_recent_team) != num_fails){
-						prob_factors[spy_set] *= (1 - cconf);
+				if (prob_map[spy_set] > 0){
+					curr_tree = trees[spy_set];
+					if (find_num_spies(spy_set, most_recent_team) < num_fails){
+						prob_map[spy_set] = 0;
 					} else {
-						prob_factors[spy_set] *= cconf;
-					}
+						prob_factors[spy_set] = 1.0;
+						if (find_num_spies(spy_set, most_recent_team) > 0){
+							prob_no_fail = curr_tree->curr_node->get_child(0)->uniform_win_prob;
+							prob_fail = curr_tree->curr_node->get_child(1)->uniform_win_prob;
+							if (num_fails > 0 && prob_fail + prob_no_fail > 0){
+								prob_factors[spy_set] = prob_fail / (prob_fail + prob_no_fail);
+							} else if (prob_fail + prob_no_fail > 0){
+								prob_factors[spy_set] = prob_no_fail / (prob_fail + prob_no_fail);
+							}
+						}
 
-					factor_total += prob_factors[spy_set];
+						// may result in errors (double check this part)
+						if (num_fails > 0 && find_num_spies(spy_set, most_recent_team) != num_fails){
+							prob_factors[spy_set] *= (1 - cconf);
+						} else {
+							prob_factors[spy_set] *= cconf;
+						}
+
+						factor_total += prob_factors[spy_set];
+					}
 				}
 			}
 
 			double prob_update, normalization = 0.0;
 			for (int i = 0; i < subsets.size(); i++){
 				spy_set = subsets[i];
-				prob_update = mconf * prob_factors[spy_set] + (1 - mconf) * factor_total / subsets.size();
-				prob_map[spy_set] *= prob_update;
-				normalization += prob_map[spy_set];
+				if (prob_map[spy_set] > 0){
+					prob_update = mconf * prob_factors[spy_set] + (1 - mconf) * factor_total / subsets.size();
+					prob_map[spy_set] *= prob_update;
+					normalization += prob_map[spy_set];
+				}
 			}
 
 			for (int i = 0; i < subsets.size(); i++){
 				spy_set = subsets[i];
-				prob_map[spy_set] /= normalization;
+				if (prob_map[spy_set] > 0){
+					prob_map[spy_set] /= normalization;
+				}
 			}
 
-			int result = (num_fails > 0);
+			int result = (num_fails >= spec->wins[mission]);
 			for (int i = 0; i < subsets.size(); i++){
 				spy_set = subsets[i];
 				// This syntax choice is a check to make sure everything works that may initially fail
@@ -271,6 +294,9 @@ int main(){
 			game->vote_update(team, votes);
 
 			print_statistics(game, player_names);
+
+			team.clear();
+			votes.clear();
 		}
 		
 		cout << "Please enter the number of cards failing the mission (at least " << game_spec->wins[mission] << " out of " << game_spec->missions[mission] << " cards must be fails for the mission to fail): ";
@@ -279,8 +305,6 @@ int main(){
 		game->mission_update(num_fails);
 		print_statistics(game, player_names);
 
-		team.clear();
-		votes.clear();
 		mission++;
 		num_votes = 0;
 	}
