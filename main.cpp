@@ -29,7 +29,7 @@ vector< set<int> > k_subsets_set(int k, int num){
 class RGame {
 	private:
 		GameSpec* spec;
-		double vconf, mconf;
+		double vconf, mconf, cconf;
 		map<set<int>, GameTree*> trees;
 		vector< set<int> > subsets;
 		map<set<int>, double> prob_map;
@@ -38,10 +38,11 @@ class RGame {
 	public:
 		int mission, rpoints, spoints;
 
-		RGame(GameSpec* spec, double vconf, double mconf){
+		RGame(GameSpec* spec, double vconf, double mconf, double cconf){
 			this->spec = spec;
 			this->vconf = vconf;
 			this->mconf = mconf;
+			this->cconf = cconf;
 			mission = 0;
 			rpoints = 0;
 			spoints = 0;
@@ -136,6 +137,14 @@ class RGame {
 					} else if (prob_fail + prob_no_fail > 0){
 						prob_factors[spy_set] = prob_no_fail / (prob_fail + prob_no_fail);
 					}
+
+					// may result in errors (double check this part)
+					if (num_fails > 0 && find_num_spies(spy_set, most_recent_team) != num_fails){
+						prob_factors[spy_set] *= (1 - cconf)
+					} else {
+						prob_factors[spy_set] *= cconf;
+					}
+
 					factor_total += prob_factors[spy_set];
 				}
 			}
@@ -215,6 +224,7 @@ void print_statistics(RGame* game, vector<string> player_names){
 int main(){
 	double voting_confidence = 0.1;
 	double mission_confidence = 0.8;
+	double coord_confidence = 0.8;
 
 	int num_players = 0;
 	cout << "Welcome to the Resistance Game Calculator developed by Matthew Brennan and Vincent Kee." << endl;
@@ -226,7 +236,7 @@ int main(){
 	}
 
 	GameSpec* game_spec = new GameSpec(num_players);
-	RGame* game = new RGame(game_spec, voting_confidence, mission_confidence);
+	RGame* game = new RGame(game_spec, voting_confidence, mission_confidence, coord_confidence);
 
 	map<string, int> name_map;
 	vector<string> player_names;
