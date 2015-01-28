@@ -126,17 +126,19 @@ class RGame {
 			// Zero impossible probabilities and update based on actions as above
 			for (int i = 0; i < subsets.size(); i++){
 				spy_set = subsets[i];
+				curr_tree = trees[spy_set];
 				if (find_num_spies(spy_set, most_recent_team) < num_fails){
 					prob_map[spy_set] = 0;
 				} else {
-					prob_no_fail = curr_tree->curr_node->get_child(0)->uniform_win_prob;
-					prob_fail = curr_tree->curr_node->get_child(1)->uniform_win_prob;
-
-					prob_factors[spy_set] = 0.5;
-					if (num_fails > 0 && prob_fail + prob_no_fail > 0){
-						prob_factors[spy_set] = prob_fail / (prob_fail + prob_no_fail);
-					} else if (prob_fail + prob_no_fail > 0){
-						prob_factors[spy_set] = prob_no_fail / (prob_fail + prob_no_fail);
+					prob_factors[spy_set] = 1.0;
+					if (find_num_spies(spy_set, most_recent_team) > 0){
+						prob_no_fail = curr_tree->curr_node->get_child(0)->uniform_win_prob;
+						prob_fail = curr_tree->curr_node->get_child(1)->uniform_win_prob;
+						if (num_fails > 0 && prob_fail + prob_no_fail > 0){
+							prob_factors[spy_set] = prob_fail / (prob_fail + prob_no_fail);
+						} else if (prob_fail + prob_no_fail > 0){
+							prob_factors[spy_set] = prob_no_fail / (prob_fail + prob_no_fail);
+						}
 					}
 
 					// may result in errors (double check this part)
@@ -250,7 +252,7 @@ int main(){
 	set<int> votes;
 	while (game->rpoints < 3 && game->spoints < 3){
 		while (num_votes < num_players / 2.0){
-			cout << "Please enter the names (space-separated) of the players on the proposed team: " << endl;
+			cout << "Please enter the names (space-separated) of the players on the proposed team: (" << game_spec->missions[mission] << " players this round): ";
 			for (int i = 0; i < game_spec->missions[mission]; i++){
 				cin >> curr_player_name;
 				team.push_back(name_map[curr_player_name]);
@@ -260,7 +262,7 @@ int main(){
 			cout << "Please enter the number of votes for the proposed team: " << endl;
 			cin >> num_votes;
 
-			cout << "Please enter the names (space-separated) of the players who voted for the proposed team:" << endl;
+			cout << "Please enter the " << num_votes << " names (space-separated) of the players who voted for the proposed team:" << endl;
 			for (int i = 0; i < num_votes; i++){
 				cin >> curr_player_name;
 				votes.insert(name_map[curr_player_name]);
@@ -271,7 +273,7 @@ int main(){
 			print_statistics(game, player_names);
 		}
 		
-		cout << "Please enter the number of cards failing the mission: " << endl;
+		cout << "Please enter the number of cards failing the mission (at least " << game_spec->wins[mission] << " out of " << game_spec->missions[mission] << " cards must be fails for the mission to fail): ";
 		cin >> num_fails;
 
 		game->mission_update(num_fails);
@@ -280,6 +282,14 @@ int main(){
 		team.clear();
 		votes.clear();
 		mission++;
+		num_votes = 0;
+	}
+
+	// Case where spies win
+	if (game->rpoints < 3){
+		cout << "Spies win!" << endl;
+	} else { // Case where resistance wins
+		cout << "Resistance wins!" << endl;
 	}
 
 	delete game_spec;
