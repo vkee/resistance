@@ -140,7 +140,7 @@ class RGame {
 
 					// may result in errors (double check this part)
 					if (num_fails > 0 && find_num_spies(spy_set, most_recent_team) != num_fails){
-						prob_factors[spy_set] *= (1 - cconf)
+						prob_factors[spy_set] *= (1 - cconf);
 					} else {
 						prob_factors[spy_set] *= cconf;
 					}
