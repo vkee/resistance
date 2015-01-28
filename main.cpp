@@ -196,10 +196,6 @@ class RGame {
 					}
 				}
 			}
-
-			for (int j = 0; j< num_players; j++){
-				player_probs[j] /= spec->num_spies;
-			}
 			return player_probs;
 		}
 

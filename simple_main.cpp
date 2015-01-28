@@ -42,6 +42,11 @@ class SimpleRGame {
 			rpoints = 0;
 			spoints = 0;
 			subsets = k_subsets_set(spec->num_spies, spec->num_players);
+			set<int> spy_set;
+			for (int i = 0; i < subsets.size(); i++){
+				spy_set = subsets[i];
+				prob_map[spy_set] = 1.0 / subsets.size();
+			}
 		}
 
 		void update(vector<int> team, int num_fails){
@@ -53,13 +58,15 @@ class SimpleRGame {
 				spy_set = subsets[i];
 				if (find_num_spies(spy_set, team) < num_fails){
 					prob_map[spy_set] = 0;
-				} else if (num_fails > 0 && find_num_spies(spy_set, most_recent_team) != num_fails){
+				} else if (num_fails > 0 && find_num_spies(spy_set, team) != num_fails){
 					prob_map[spy_set] *= (1 - cconf);
 				} else {
 					prob_map[spy_set] *= cconf;
 				}
 				normalization += prob_map[spy_set];
 			}
+
+			cout << normalization << endl;
 
 			for (int i = 0; i < subsets.size(); i++){
 				spy_set = subsets[i];
@@ -90,10 +97,6 @@ class SimpleRGame {
 					}
 				}
 			}
-
-			for (int j = 0; j< num_players; j++){
-				player_probs[j] /= spec->num_spies;
-			}
 			return player_probs;
 		}
 
@@ -104,7 +107,7 @@ class SimpleRGame {
 		}
 };
 
-void print_statistics(RGame* game, vector<string> player_names){
+void print_statistics(SimpleRGame* game, vector<string> player_names){
 	cout << "****************STATISTICS****************" << endl;
 	vector<double> stats = game->player_stats();
 	for (int i = 0; i < player_names.size(); i++){
@@ -126,7 +129,7 @@ int main(){
 	}
 
 	GameSpec* game_spec = new GameSpec(num_players);
-	SimpeRGame* game = new SimpeRGame(game_spec, coord_confidence);
+	SimpleRGame* game = new SimpleRGame(game_spec, coord_confidence);
 
 	map<string, int> name_map;
 	vector<string> player_names;
@@ -155,7 +158,6 @@ int main(){
 		print_statistics(game, player_names);
 
 		team.clear();
-		votes.clear();
 		mission++;
 	}
 
