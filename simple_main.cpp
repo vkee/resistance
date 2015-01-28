@@ -29,15 +29,16 @@ vector< set<int> > k_subsets_set(int k, int num){
 class SimpleRGame {
 	private:
 		GameSpec* spec;
-		double cconf;
+		double cconf, pconf;
 		vector< set<int> > subsets;
 		map<set<int>, double> prob_map;
 	public:
 		int mission, rpoints, spoints;
 
-		SimpleRGame(GameSpec* spec, double cconf){
+		SimpleRGame(GameSpec* spec, double cconf, double pconf){
 			this->spec = spec;
 			this->cconf = cconf;
+			this->pconf = pconf;
 			mission = 0;
 			rpoints = 0;
 			spoints = 0;
@@ -63,6 +64,12 @@ class SimpleRGame {
 				} else {
 					prob_map[spy_set] *= cconf;
 				}
+				if (num_fails == 0 && find_num_spies(spy_set, team) > 0){
+					prob_map[spy_set] *= (1 - pconf);
+				} else {
+					prob_map[spy_set] *= pconf;
+				}
+
 				normalization += prob_map[spy_set];
 			}
 
@@ -116,6 +123,7 @@ void print_statistics(SimpleRGame* game, vector<string> player_names){
 
 int main(){
 	double coord_confidence = 0.8;
+	double points_confidence = 0.6;
 
 	int num_players = 0;
 	cout << "Welcome to the Simple Resistance Game Calculator developed by Matthew Brennan and Vincent Kee." << endl;
@@ -127,7 +135,7 @@ int main(){
 	}
 
 	GameSpec* game_spec = new GameSpec(num_players);
-	SimpleRGame* game = new SimpleRGame(game_spec, coord_confidence);
+	SimpleRGame* game = new SimpleRGame(game_spec, coord_confidence, points_confidence);
 
 	map<string, int> name_map;
 	vector<string> player_names;
@@ -147,7 +155,7 @@ int main(){
 			cin >> curr_player_name;
 			team.push_back(name_map[curr_player_name]);
 		}
-		//team.sort();
+		sort(team.begin(), team.end());
 
 		cout << "Please enter the number of cards failing the mission (at least " << game_spec->wins[mission] << " out of " << game_spec->missions[mission] << " cards must be fails for the mission to fail): ";
 		cin >> num_fails;

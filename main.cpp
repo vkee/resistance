@@ -254,13 +254,12 @@ int main(){
 				cin >> curr_player_name;
 				team.push_back(name_map[curr_player_name]);
 			}
-			//team.sort();
+			sort(team.begin(), team.end());
 			
 			cout << "Please enter the number of votes for the proposed team: " << endl;
 			cin >> num_votes;
 
 			cout << "Please enter the names (space-separated) of the players who voted for the proposed team:" << endl;
-			// Make sure that vote names are properly ordered (sort afterwards)
 			for (int i = 0; i < num_votes; i++){
 				cin >> curr_player_name;
 				votes.insert(name_map[curr_player_name]);
