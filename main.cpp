@@ -238,7 +238,7 @@ int main(){
 		player_names.push_back(curr_player_name);
 	}
 
-	int mission = 0, num_votes;
+	int mission = 0, num_votes, num_fails;
 	vector<int> team;
 	set<int> votes;
 	while (game->rpoints < 3 && game->spoints < 3){
@@ -265,7 +265,6 @@ int main(){
 			print_statistics(game, player_names);
 		}
 		
-		int num_fails;
 		cout << "Please enter the number of cards failing the mission: " << endl;
 		cin >> num_fails;
 
