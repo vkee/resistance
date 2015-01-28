@@ -36,9 +36,9 @@ class Node {
 
 // Node representing a Vote Decision
 class VotingNode: public Node {
-	private:
-		map<vector<int>, Node*> children;
 	public:
+		map<vector<int>, Node*> children;
+
 		VotingNode(Node* parent, GameSpec* spec, set<int> spies, int spoints, int rpoints, int mission)
 			:Node(parent, spec, spies, spoints, rpoints, mission){};
 
@@ -51,9 +51,9 @@ class VotingNode: public Node {
 };
 
 class MissionNode: public Node {
-	private:
-		vector<Node*> children;
 	public:
+		vector<Node*> children;
+
 		MissionNode(Node* parent, GameSpec* spec, set<int> spies, int spoints, int rpoints, int mission)
 			:Node(parent, spec, spies, spoints, rpoints, mission){};
 
@@ -68,8 +68,9 @@ class GameTree {
 	private:
 		GameSpec* spec;
 		set<int> spies;
-		Node* curr_node;
 	public:
+		Node* curr_node;
+		
 		GameTree(set<int> spies, GameSpec* spec);
 		
 		void mission_vote(vector<int> voted_team);
