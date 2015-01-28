@@ -105,6 +105,32 @@ class SimpleRGame {
 			return player_probs;
 		}
 
+		vector<double> player_spec_stats(int player){
+			int num_players = spec->num_players;
+			vector<double> player_probs;
+			for (int j = 0; j < num_players; j++){
+				player_probs.push_back(0);
+			}
+
+			set<int> spy_set;
+			double normalization = 0.0;
+			for (int i = 0; i < subsets.size(); i++){
+				spy_set = subsets[i];
+				for (int j = 0; j < num_players; j++){
+					if (spy_set.count(j) > 0 && spy_set.count(player) == 0){
+						player_probs[j] += prob_map[spy_set];
+						normalization += prob_map[spy_set];
+					}
+				}
+			}
+
+			for (int j = 0; j < num_players; j++){
+				player_probs[j] *= spec->num_spies / normalization;
+			}
+
+			return player_probs;
+		}
+
 		~SimpleRGame(){
 			if (!prob_map.empty()){
 				prob_map.clear();
@@ -119,6 +145,14 @@ void print_statistics(SimpleRGame* game, vector<string> player_names){
 		cout << player_names[i] << ": " << stats[i] << endl;
 	}
 	cout << "******************************************" << endl;
+}
+
+void print_player_statistics(SimpleRGame* game, vector<string> player_names, string player_name, int player_num){
+	cout << "************STATISTICS FOR " << player_name << "************" << endl;
+	vector<double> stats = game->player_spec_stats(player_num);
+	for (int i = 0; i < player_names.size(); i++){
+		cout << player_names[i] << ": " << stats[i] << endl;
+	}
 }
 
 int main(){
@@ -147,7 +181,7 @@ int main(){
 		player_names.push_back(curr_player_name);
 	}
 
-	int mission = 0, num_fails;
+	int mission = 0, num_fails, num_spec_stats;
 	vector<int> team;
 	while (game->rpoints < 3 && game->spoints < 3){
 		cout << "Please enter the names (space-separated) of the players on the team (" << game_spec->missions[mission] << " players this round): ";
@@ -162,6 +196,16 @@ int main(){
 
 		game->update(team, num_fails);
 		print_statistics(game, player_names);
+
+		cout << "Please enter the number of players who would like to know statistics from their perspectives: ";
+		cin >> num_spec_stats;
+		if (num_spec_stats != 0){
+			cout << "Please enter the names of the players who would like to know statistics from their perspectives: ";
+			for (int i = 0; i < num_spec_stats; i++){
+				cin >> curr_player_name;
+				print_player_statistics(game, player_names, curr_player_name, name_map[curr_player_name]);
+			}
+		}
 
 		team.clear();
 		mission++;
