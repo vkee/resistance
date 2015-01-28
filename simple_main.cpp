@@ -66,8 +66,6 @@ class SimpleRGame {
 				normalization += prob_map[spy_set];
 			}
 
-			cout << normalization << endl;
-
 			for (int i = 0; i < subsets.size(); i++){
 				spy_set = subsets[i];
 				prob_map[spy_set] /= normalization;
