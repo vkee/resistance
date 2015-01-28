@@ -132,7 +132,7 @@ int main(){
 	map<string, int> name_map;
 	vector<string> player_names;
 	string curr_player_name;
-	cout << "Please enter the names (space-separated) of the players:" << endl;
+	cout << "Please enter the names (space-separated) of the players: ";
 	for (int i = 0; i < num_players; i++){
 		cin >> curr_player_name;
 		name_map[curr_player_name] = i;
@@ -142,14 +142,14 @@ int main(){
 	int mission = 0, num_fails;
 	vector<int> team;
 	while (game->rpoints < 3 && game->spoints < 3){
-		cout << "Please enter the names (space-separated) of the players on the team: " << endl;
+		cout << "Please enter the names (space-separated) of the players on the team (" << game_spec->missions[mission] << " players this round): ";
 		for (int i = 0; i < game_spec->missions[mission]; i++){
 			cin >> curr_player_name;
 			team.push_back(name_map[curr_player_name]);
 		}
 		//team.sort();
 
-		cout << "Please enter the number of cards failing the mission: " << endl;
+		cout << "Please enter the number of cards failing the mission (at least " << game_spec->wins[mission] << " out of " << game_spec->missions[mission] << " cards must be fails for the mission to fail): ";
 		cin >> num_fails;
 
 		game->update(team, num_fails);
@@ -157,6 +157,13 @@ int main(){
 
 		team.clear();
 		mission++;
+	}
+
+	// Case where spies win
+	if (game->rpoints < 3){
+		cout << "Spies win!" << endl;
+	} else { // Case where resistance wins
+		cout << "Resistance wins!" << endl;
 	}
 
 	delete game_spec;
