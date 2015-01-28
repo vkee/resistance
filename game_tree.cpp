@@ -42,27 +42,6 @@ Node* Node::get_child(vector<int> voted_team){
 	return NULL;
 }
 
-// Debug functions
-
-void Node::debug(){
-	cout << "Wrong debug function!" << endl;
-}
-
-void VotingNode::debug(){
-	for (auto key : children){
-		vector<int> team = key.first;
-		Node* node = key.second;
-		print_subset(team);
-		if (node == NULL){
-			cout << "NULL bad" << endl;
-		}
-	}
-}
-
-void MissionNode::debug(){
-	cout << "Not done yet" << endl;
-}
-
 // Voting Node Methods
 double VotingNode::make_children(){
 	if (spoints == 3){ // if spies have 3 points, there is no chance for the resistance to win

@@ -74,15 +74,6 @@ class RGame {
 				if (prob_map[spy_set] > 0){
 					curr_tree = trees[spy_set];
 					action_prob = curr_tree->curr_node->get_child(team)->uniform_win_prob;
-					/*Node* test_node = curr_tree->curr_node;
-					Node* child_node = test_node->get_child(team);
-					if (child_node == NULL){
-						cout << "NULL child found" << endl;
-					} else {
-						cout << "Child not NULL" << endl;
-					}
-					test_node->debug();
-					action_prob = child_node->uniform_win_prob;*/
 					factor = 1.0;
 					for (int j = 0; j < spec->num_players; j++){
 						if (votes.count(j) > 0){

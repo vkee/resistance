@@ -33,8 +33,6 @@ class Node {
 		virtual Node* get_child(int outcome);
 
 		virtual Node* get_child(vector<int> voted_team);
-
-		virtual void debug();
 };
 
 // Node representing a Vote Decision
@@ -50,8 +48,6 @@ class VotingNode: public Node {
 		// Get the node that corresponds to the team that was voted to go in the current round
 		Node* get_child(vector<int> voted_team);
 
-		void debug();
-
 		~VotingNode();
 };
 
@@ -65,8 +61,6 @@ class MissionNode: public Node {
 		double make_children(int);
 
 		Node* get_child(int outcome);
-
-		void debug();
 
 		~MissionNode();
 };
