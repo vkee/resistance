@@ -87,6 +87,7 @@ int main(){
 			sort(team.begin(), team.end());
 			
 			// Making sure that the number of votes is correct
+			num_votes = -1;
 			while (num_votes < 0 || num_votes > game_spec->num_players){
 				cout << "Please enter the number of votes approving the proposed team (" << game_spec->num_players << " max): ";
 				cin >> num_votes;
