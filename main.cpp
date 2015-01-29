@@ -88,7 +88,7 @@ int main(){
 			
 			// Making sure that the number of votes is correct
 			while (num_votes < 0 || num_votes > game_spec->num_players){
-				cout << "Please enter the number of votes approving the proposed team (" << game_spec->num_players << " max): " << endl;
+				cout << "Please enter the number of votes approving the proposed team (" << game_spec->num_players << " max): ";
 				cin >> num_votes;
 			}
 
