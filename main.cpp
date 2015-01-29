@@ -5,249 +5,9 @@
 #include <algorithm>
 #include "game_spec.h"
 #include "game_tree.h"
+#include "r_game.h"
 
 using namespace std;
-
-vector< set<int> > k_subsets_set(int k, int num){
-	vector< set<int> > subsets;
-	if (k == 1 && num > 0){
-		for (int i = 0; i < num; i++){
-			set<int> tuple;
-			tuple.insert(i);
-			subsets.push_back(tuple);
-		}
-	} else if (num >= k){
-		subsets = k_subsets_set(k, num - 1);
-		vector< set<int> > temp_subsets = k_subsets_set(k - 1, num - 1);
-		for (int i = 0; i < temp_subsets.size(); i++){
-			temp_subsets[i].insert(num - 1);
-			subsets.push_back(temp_subsets[i]);
-		}
-	}
-	return subsets;
-}
-
-class RGame {
-	private:
-		GameSpec* spec;
-		double vconf, mconf, cconf;
-		map<set<int>, GameTree*> trees;
-		vector< set<int> > subsets;
-		map<set<int>, double> prob_map;
-
-		vector<int> most_recent_team;
-	public:
-		int mission, rpoints, spoints;
-
-		RGame(GameSpec* spec, double vconf, double mconf, double cconf){
-			this->spec = spec;
-			this->vconf = vconf;
-			this->mconf = mconf;
-			this->cconf = cconf;
-			mission = 0;
-			rpoints = 0;
-			spoints = 0;
-
-			subsets = k_subsets_set(spec->num_spies, spec->num_players);
-			cout << "> ... Loading game trees" << endl;
-			int part = subsets.size() / 10;
-			for (int i = 0; i < subsets.size(); i++){
-				trees[subsets[i]] = new GameTree(subsets[i], spec);
-				prob_map[subsets[i]] = 1.0 / subsets.size();
-				if (i % part == 0 && i > 0){
-					cout << "> ... Loaded " << (100.0 * i /subsets.size()) << "%" << endl;
-				}
-			}
-			cout << "> ... Loaded 100%" << endl;
-		}
-
-		// update overall game statistics and player statistics
-		void vote_update(vector<int> team, set<int> votes){
-			set<int> spy_set;
-			GameTree* curr_tree;
-			double factor_total = 0.0, action_prob, factor;
-			map<set<int>, double> prob_factors;
-			int num_players = spec->num_players;
-
-			for (int i = 0; i < subsets.size(); i++){
-				spy_set = subsets[i];
-				if (prob_map[spy_set] > 0){
-					curr_tree = trees[spy_set];
-					action_prob = curr_tree->curr_node->get_child(team)->uniform_win_prob;
-					factor = 1.0;
-					for (int j = 0; j < spec->num_players; j++){
-						if (votes.count(j) > 0){
-							if (spy_set.count(j) > 0){
-								factor *= 1 - action_prob;
-							} else {
-								factor *= action_prob;
-							}
-						} else {
-							if (spy_set.count(j) > 0){
-								factor *= action_prob;
-							} else {
-								factor *= 1 - action_prob;
-							}
-						}
-					}
-					prob_factors[spy_set] = factor;
-					factor_total += factor;		
-				}	
-			}
-
-			double prob_update, normalization = 0.0;
-			for (int i = 0; i < subsets.size(); i++){
-				spy_set = subsets[i];
-				if (prob_map[spy_set] > 0){
-					prob_update = vconf * prob_factors[spy_set] + (1 - vconf) * factor_total / subsets.size();
-					prob_map[spy_set] *= prob_update;
-					normalization += prob_map[spy_set];
-				}
-			}
-
-			for (int i = 0; i < subsets.size(); i++){
-				spy_set = subsets[i];
-				if (prob_map[spy_set] > 0){
-					prob_map[spy_set] /= normalization;
-				}
-			}
-
-			if (votes.size() >= num_players/2.0){
-				for (int i = 0; i < subsets.size(); i++){
-					spy_set = subsets[i];
-					if (prob_map[spy_set] > 0){
-						trees[spy_set]->mission_vote(team);
-					}
-				}
-				most_recent_team = team;
-			}
-		}
-
-		// update overall game statistics and player statistics
-		void mission_update(int num_fails){
-			set<int> spy_set;
-			GameTree* curr_tree;
-			double prob_no_fail, prob_fail;
-
-			double factor_total = 0.0;
-			map<set<int>, double> prob_factors;
-			// Zero impossible probabilities and update based on actions as above
-			for (int i = 0; i < subsets.size(); i++){
-				spy_set = subsets[i];
-				if (prob_map[spy_set] > 0){
-					curr_tree = trees[spy_set];
-					if (find_num_spies(spy_set, most_recent_team) < num_fails){
-						prob_map[spy_set] = 0;
-					} else {
-						prob_factors[spy_set] = 1.0;
-						if (find_num_spies(spy_set, most_recent_team) > 0){
-							prob_no_fail = curr_tree->curr_node->get_child(0)->uniform_win_prob;
-							prob_fail = curr_tree->curr_node->get_child(1)->uniform_win_prob;
-							if (num_fails > 0 && prob_fail + prob_no_fail > 0){
-								prob_factors[spy_set] = prob_no_fail / (prob_fail + prob_no_fail);
-							} else if (prob_fail + prob_no_fail > 0){
-								prob_factors[spy_set] = prob_fail / (prob_fail + prob_no_fail);
-							}
-						}
-
-						// may result in errors (double check this part)
-						if (num_fails > 0 && find_num_spies(spy_set, most_recent_team) != num_fails){
-							prob_factors[spy_set] *= (1 - cconf);
-						} else {
-							prob_factors[spy_set] *= cconf;
-						}
-
-						factor_total += prob_factors[spy_set];
-					}
-				}
-			}
-
-			double prob_update, normalization = 0.0;
-			for (int i = 0; i < subsets.size(); i++){
-				spy_set = subsets[i];
-				if (prob_map[spy_set] > 0){
-					prob_update = mconf * prob_factors[spy_set] + (1 - mconf) * factor_total / subsets.size();
-					prob_map[spy_set] *= prob_update;
-					normalization += prob_map[spy_set];
-				}
-			}
-
-			for (int i = 0; i < subsets.size(); i++){
-				spy_set = subsets[i];
-				if (prob_map[spy_set] > 0){
-					prob_map[spy_set] /= normalization;
-				}
-			}
-
-			int result = (num_fails >= spec->wins[mission]);
-			for (int i = 0; i < subsets.size(); i++){
-				spy_set = subsets[i];
-				// This syntax choice is a check to make sure everything works that may initially fail
-				if (prob_map[spy_set] > 0){
-					trees[spy_set]->mission_outcome(result);
-				}
-			}
-
-			// Remember to update tree nodes
-			if (num_fails >= spec->wins[mission]){
-				spoints++;
-			} else {
-				rpoints++;
-			}
-			mission++;
-		}
-
-		vector<double> player_stats(){
-			int num_players = spec->num_players;
-			vector<double> player_probs;
-			for (int j = 0; j < num_players; j++){
-				player_probs.push_back(0);
-			}
-
-			set<int> spy_set;
-			for (int i = 0; i < subsets.size(); i++){
-				spy_set = subsets[i];
-				for (int j = 0; j < num_players; j++){
-					if (spy_set.count(j) > 0){
-						player_probs[j] += prob_map[spy_set];
-					}
-				}
-			}
-			return player_probs;
-		}
-
-		vector<double> player_spec_stats(int player){
-			int num_players = spec->num_players;
-			vector<double> player_probs;
-			for (int j = 0; j < num_players; j++){
-				player_probs.push_back(0);
-			}
-
-			set<int> spy_set;
-			double normalization = 0.0;
-			for (int i = 0; i < subsets.size(); i++){
-				spy_set = subsets[i];
-				for (int j = 0; j < num_players; j++){
-					if (spy_set.count(j) > 0 && spy_set.count(player) == 0){
-						player_probs[j] += prob_map[spy_set];
-						normalization += prob_map[spy_set];
-					}
-				}
-			}
-
-			for (int j = 0; j < num_players; j++){
-				player_probs[j] *= spec->num_spies / normalization;
-			}
-
-			return player_probs;
-		}
-
-		~RGame(){
-			if (!trees.empty()){
-				trees.clear();
-			}
-		}
-};
 
 void print_statistics(RGame* game, vector<string> player_names){
 	cout << "****************STATISTICS****************" << endl;
@@ -286,32 +46,66 @@ int main(){
 	map<string, int> name_map;
 	vector<string> player_names;
 	string curr_player_name;
-	cout << "Please enter the names (space-separated) of the players: ";
-	for (int i = 0; i < num_players; i++){
-		cin >> curr_player_name;
-		name_map[curr_player_name] = i;
-		player_names.push_back(curr_player_name);
+
+	while (player_names.size() != num_players){
+		player_names.clear();
+		cout << "Please enter the names (space-separated) of the " << num_players << " players: ";
+		for (int i = 0; i < num_players; i++){
+			cin >> curr_player_name;
+			name_map[curr_player_name] = i;
+
+			// Making sure that the player name is not already input
+			if (find(player_names.begin(), player_names.end(), curr_player_name) == player_names.end()){
+				player_names.push_back(curr_player_name);
+			}
+		}
 	}
 
-	int mission = 0, num_votes = 0, num_fails, num_spec_stats;
+	int mission = 0, num_votes = -1, num_fails = -1, num_spec_stats = -1;
 	vector<int> team;
 	set<int> votes;
 	while (game->rpoints < 3 && game->spoints < 3){
 		while (num_votes < num_players / 2.0){
-			cout << "Please enter the names (space-separated) of the players on the proposed team: (" << game_spec->missions[mission] << " players this round): ";
-			for (int i = 0; i < game_spec->missions[mission]; i++){
-				cin >> curr_player_name;
-				team.push_back(name_map[curr_player_name]);
+
+			while (team.size() != game_spec->missions[mission]){
+				team.clear();
+				cout << "Please enter the names (space-separated) of the players on the proposed team (" 
+					<< game_spec->missions[mission] << " players on round #" << mission + 1 << "): ";
+				for (int i = 0; i < game_spec->missions[mission]; i++){
+					cin >> curr_player_name;
+
+					// Making sure that the player name is input correctly 
+					if (find(player_names.begin(), player_names.end(), curr_player_name) != player_names.end()){
+						// Making sure that the player name is not already input
+						if (find(team.begin(), team.end(), name_map[curr_player_name]) == team.end()){
+							team.push_back(name_map[curr_player_name]);
+						}
+					}
+				}
 			}
+
 			sort(team.begin(), team.end());
 			
-			cout << "Please enter the number of votes for the proposed team: ";
-			cin >> num_votes;
+			// Making sure that the number of votes is correct
+			while (num_votes < 0 || num_votes > game_spec->num_players){
+				cout << "Please enter the number of votes approving the proposed team (" << game_spec->num_players << " max): " << endl;
+				cin >> num_votes;
+			}
 
-			cout << "Please enter the " << num_votes << " names (space-separated) of the players who voted for the proposed team: ";
-			for (int i = 0; i < num_votes; i++){
-				cin >> curr_player_name;
-				votes.insert(name_map[curr_player_name]);
+			// Making sure that names of the votors are correct
+			while (votes.size() < num_votes){
+				cout << "Please enter the " << num_votes << " names (space-separated) of the players who voted for the proposed team: ";
+				for (int i = 0; i < num_votes; i++){
+					cin >> curr_player_name;
+
+					// Making sure that the player name is input correctly
+					if (find(player_names.begin(), player_names.end(), curr_player_name) != player_names.end()){
+						// Making sure that the player name is not already input
+						if (find(votes.begin(), votes.end(), name_map[curr_player_name]) == votes.end()){
+							votes.insert(name_map[curr_player_name]);
+						}
+					}
+				}
 			}
 
 			game->vote_update(team, votes);
@@ -322,24 +116,44 @@ int main(){
 			votes.clear();
 		}
 		
-		cout << "Please enter the number of cards failing the mission (at least " << game_spec->wins[mission] << " out of " << game_spec->missions[mission] << " cards must be fails for the mission to fail): ";
-		cin >> num_fails;
-
-		game->mission_update(num_fails);
-		print_statistics(game, player_names);
-
-		cout << "Please enter the number of players who would like to know statistics from their perspectives: ";
-		cin >> num_spec_stats;
-		if (num_spec_stats != 0){
-			cout << "Please enter the names of the players who would like to know statistics from their perspectives: ";
-			for (int i = 0; i < num_spec_stats; i++){
-				cin >> curr_player_name;
-				print_player_statistics(game, player_names, curr_player_name, name_map[curr_player_name]);
-			}
+		// Making sure that the number of fails is correct
+		while (num_fails < 0 || num_fails > game_spec->num_spies){
+			cout << "Please enter the number of cards failing the mission (at least " << game_spec->wins[mission] <<
+			 " out of " << game_spec->missions[mission] << " cards must be fails for the mission to fail): ";
+			cin >> num_fails;
 		}
 
-		mission++;
-		num_votes = 0;
+		game->mission_update(num_fails);
+
+		if (!(game->rpoints > 2 || game->spoints > 2)){
+			print_statistics(game, player_names);
+
+			// Making sure that the number of players is correct
+			while (num_spec_stats < 0 || num_spec_stats > num_players){
+				cout << "Please enter the number of players who would like to know statistics from their perspectives: ";
+				cin >> num_spec_stats;
+			}
+
+			if (num_spec_stats != 0){
+				cout << "Please enter the names of the players who would like to know statistics from their perspectives (" << 
+				num_spec_stats << " max): ";
+				for (int i = 0; i < num_spec_stats; i++){
+					cin >> curr_player_name;
+
+					// Making sure that the player name is input correctly
+					if (find(player_names.begin(), player_names.end(), curr_player_name) != player_names.end()){
+						print_player_statistics(game, player_names, curr_player_name, name_map[curr_player_name]);
+					} else {
+						i += -1;
+					}
+				}
+			}
+
+			mission++;
+			num_votes = -1;
+			num_fails = -1;
+			num_spec_stats = -1;
+		}
 	}
 
 	// Case where spies win
