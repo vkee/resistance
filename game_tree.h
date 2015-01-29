@@ -13,13 +13,11 @@ int find_num_spies(set<int> spies, vector<int> team);
 
 // Parent Class for Voting Node and Mission Node
 class Node {
-	//protected:
 	public:
 		GameSpec* spec;
 		int spoints, rpoints, mission;
 		Node* parent;
 		set<int> spies;
-	//public:
 		double uniform_win_prob;
 
 		// spoints - # of pts the spies have
